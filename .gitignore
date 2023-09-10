@@ -1,0 +1,40 @@
+# Archivos generados por Visual Studio
+.vscode/
+bin/
+obj/
+
+# Carpeta de paquetes NuGet
+packages/
+
+# Carpeta de caché de herramientas .NET
+.dotnet/
+
+# Archivo de configuración de desarrollo
+launchSettings.json
+
+# Archivo de registro de errores local
+*.log
+
+# Archivos de compilación generados
+*.dll
+*.exe
+*.pdb
+*.dll.config
+
+# Carpetas de análisis de código y reportes
+/codecoverage/
+/TestResults/
+/Coverage/
+
+# Archivos de configuración específicos de usuario
+NuGet.config
+DotnetTools.json
+
+# Carpeta de salida de publicación
+/publish/
+
+# Carpeta de dependencias de Node.js
+node_modules/
+
+# Archivos de caché de Visual Studio
+.vscode
