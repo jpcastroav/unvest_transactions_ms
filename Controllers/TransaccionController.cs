@@ -55,15 +55,17 @@ namespace unvest_transactions_ms.Controllers
                 return NotFound();
             }
 
-            var transacciones = _context.Transaccion.Where<Transaccion>(t => t.IdUsuario == userId).Select(s => new {id_empresa = s.IdEmpresa, cantidad = s.Tipo == 1? s.Cantidad : (-1)*s.Cantidad });
-            var stocks = await transacciones.GroupBy(g => g.id_empresa).Select(p => new Stock{IdEmpresa = p.Key, Cantidad = p.Sum(s => s.cantidad)}).ToListAsync();
+            var transacciones = _context.Transaccion.Where<Transaccion>(t => t.IdUsuario == userId).Select(s => new Stock{IdEmpresa = s.IdEmpresa, Cantidad = s.Tipo == 1? s.Cantidad : (-1)*s.Cantidad }).GroupBy(g => g.IdEmpresa);
+
+            var stocks = new List<Stock>();
+
+            foreach (var group in transacciones)
+            {
+                var stock = new Stock{IdEmpresa = group.Key, Cantidad = group.Sum(s => s.Cantidad)};
+                stocks.Add(stock);
+            }
 
             Console.WriteLine("Empresa " + stocks[0].IdEmpresa + ", Cantidad " + stocks[0].Cantidad);
-
-            /*if (transaccion == null)
-            {
-                return NotFound();
-            }*/
 
             return stocks;
         }
