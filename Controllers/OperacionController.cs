@@ -19,10 +19,10 @@ namespace unvest_transactions_ms.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Operacion>>> GetOperacion()
         {
-          if (_context.Operacion == null)
-          {
-              return NotFound();
-          }
+            if (_context.Operacion == null)
+            {
+                return NotFound();
+            }
             return await _context.Operacion.ToListAsync();
         }
 
@@ -44,70 +44,43 @@ namespace unvest_transactions_ms.Controllers
             return operacion;
         }
 
-        // PUT: Operacion/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutOperacion(int id, Operacion operacion)
-        {
-            if (id != operacion.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(operacion).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!OperacionExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
         // POST: Operacion
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Operacion>> PostOperacion(Operacion operacion)
         {
-          if (_context.Operacion == null)
-          {
-              return Problem("Entity set 'TransactionsContext.Operacion'  is null.");
-          }
+            if (_context.Operacion == null)
+            {
+                return Problem("Entity set 'TransactionsContext.Operacion'  is null.");
+            }
+
+            //Se calcula el balance actual de acuerdo a las operaciones de deposito y retiro realizadas
+            decimal balanceActual = _context.Operacion.Where(t => t.Tipo == 1 && t.IdUsuario == operacion.IdUsuario).Sum(s => s.Cantidad);
+            balanceActual -= _context.Operacion.Where(t => t.Tipo == 2 && t.IdUsuario == operacion.IdUsuario).Sum(s => s.Cantidad);
+
+            if(operacion.Tipo == 2 && operacion.Cantidad > balanceActual)//Retiro. Se debe restringir a la cantidad disponible
+            {
+                ModelState.AddModelError("Cantidad", "La cantidad solicitada supera la cantidad de retiro");
+                return BadRequest(ModelState);
+            }
+
+            //Si se trata de un deposito o un retiro que no supera el balance actual, se actualiza el balance
+            var balance = _context.Balance.FirstOrDefault<Balance>(b => b.IdUsuario == operacion.IdUsuario);
+            if(balance == null)
+            {
+                balance = new Balance{IdUsuario = operacion.IdUsuario};
+                _context.Entry(balance).State = EntityState.Added;
+            }
+            else
+            {
+                _context.Entry(balance).State = EntityState.Modified;
+            }
+            balance.Valor = operacion.Tipo == 1? balanceActual + operacion.Cantidad : balanceActual - operacion.Cantidad;
+            //Se agrega la operacion a la base de datos
             _context.Operacion.Add(operacion);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetOperacion", new { id = operacion.Id }, operacion);
-        }
-
-        // DELETE: Operacion/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteOperacion(int id)
-        {
-            if (_context.Operacion == null)
-            {
-                return NotFound();
-            }
-            var operacion = await _context.Operacion.FindAsync(id);
-            if (operacion == null)
-            {
-                return NotFound();
-            }
-
-            _context.Operacion.Remove(operacion);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
         private bool OperacionExists(int id)

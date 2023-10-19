@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using unvest_transactions_ms.Models;
 
+using System.Text.Json.Serialization;
+
 namespace unvest_transactions_ms.Controllers
 {
     [Route("[controller]")]
@@ -44,35 +46,26 @@ namespace unvest_transactions_ms.Controllers
             return transaccion;
         }
 
-        // PUT: Transaccion/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutTransaccion(int id, Transaccion transaccion)
+        // GET: Transaccion/getOwnedStocks/5
+        [HttpGet("getOwnedStocks/{userId}")]
+        public async Task<ActionResult<IEnumerable<Stock>>> GetOwnedStocks(int userId)
         {
-            if (id != transaccion.Id)
+            if (_context.Transaccion == null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
-            _context.Entry(transaccion).State = EntityState.Modified;
+            var transacciones = _context.Transaccion.Where<Transaccion>(t => t.IdUsuario == userId).Select(s => new {id_empresa = s.IdEmpresa, cantidad = s.Tipo == 1? s.Cantidad : (-1)*s.Cantidad });
+            var stocks = await transacciones.GroupBy(g => g.id_empresa).Select(p => new Stock{IdEmpresa = p.Key, Cantidad = p.Sum(s => s.cantidad)}).ToListAsync();
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TransaccionExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            Console.WriteLine("Empresa " + stocks[0].IdEmpresa + ", Cantidad " + stocks[0].Cantidad);
 
-            return NoContent();
+            /*if (transaccion == null)
+            {
+                return NotFound();
+            }*/
+
+            return stocks;
         }
 
         // POST: Transaccion
@@ -80,34 +73,59 @@ namespace unvest_transactions_ms.Controllers
         [HttpPost]
         public async Task<ActionResult<Transaccion>> PostTransaccion(Transaccion transaccion)
         {
-          if (_context.Transaccion == null)
-          {
-              return Problem("Entity set 'TransactionsContext.Transaccion'  is null.");
-          }
+            if (_context.Transaccion == null)
+            {
+                return Problem("Entity set 'TransactionsContext.Transaccion'  is null.");
+            }
+
+            var balance = _context.Balance.FirstOrDefault<Balance>(b => b.IdUsuario == transaccion.IdUsuario);
+
+            if(balance == null)
+            {
+                ModelState.AddModelError("Balance", "No se pudo realizar la acción porque no se pudo obtener la información del balance");
+                return BadRequest(ModelState);
+            }
+
+            if(transaccion.Tipo == 1)//Compra
+            {
+                decimal cantidadCompra = transaccion.Cantidad * transaccion.ValorAccion;
+
+                if(cantidadCompra > balance.Valor)
+                {
+                    ModelState.AddModelError("Valor compra", "El valor total de la compra excede el balance actual");
+                    return BadRequest(ModelState);
+                }
+
+                balance.Valor -= cantidadCompra;
+                 _context.Entry(balance).State = EntityState.Modified;
+            }
+            else //Venta 
+            {
+                decimal disponible = _context.Transaccion.Where(t => t.Tipo == 1 && t.IdEmpresa == transaccion.IdEmpresa && t.IdUsuario == transaccion.IdUsuario).Sum(s => s.Cantidad);
+                disponible -= _context.Transaccion.Where(t => t.Tipo == 2 && t.IdEmpresa == transaccion.IdEmpresa && t.IdUsuario == transaccion.IdUsuario).Sum(s => s.Cantidad);
+
+                if(disponible <= 0 || transaccion.Cantidad > disponible)
+                {
+                    ModelState.AddModelError("Cantidad venta", "La cantidad de la venta supera el disponible de acciones");
+                    return BadRequest(ModelState);
+                }
+
+                balance.Valor += transaccion.Cantidad * transaccion.ValorAccion;
+            }
+
             _context.Transaccion.Add(transaccion);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetTransaccion", new { id = transaccion.Id }, transaccion);
         }
 
-        // DELETE: Transaccion/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTransaccion(int id)
+        public class Stock
         {
-            if (_context.Transaccion == null)
-            {
-                return NotFound();
-            }
-            var transaccion = await _context.Transaccion.FindAsync(id);
-            if (transaccion == null)
-            {
-                return NotFound();
-            }
+            [JsonPropertyName("id_empresa")]
+            public int IdEmpresa {get; set;}
 
-            _context.Transaccion.Remove(transaccion);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            [JsonPropertyName("cantidad")]
+            public decimal Cantidad {get; set;}
         }
 
         private bool TransaccionExists(int id)

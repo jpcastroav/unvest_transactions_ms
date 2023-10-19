@@ -19,10 +19,10 @@ namespace unvest_transactions_ms.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Balance>>> GetBalance()
         {
-          if (_context.Balance == null)
-          {
-              return NotFound();
-          }
+            if (_context.Balance == null)
+            {
+                return NotFound();
+            }
             return await _context.Balance.ToListAsync();
         }
 
@@ -30,10 +30,10 @@ namespace unvest_transactions_ms.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Balance>> GetBalance(int id)
         {
-          if (_context.Balance == null)
-          {
-              return NotFound();
-          }
+            if (_context.Balance == null)
+            {
+                return NotFound();
+            }
             var balance = await _context.Balance.FindAsync(id);
 
             if (balance == null)
@@ -44,35 +44,23 @@ namespace unvest_transactions_ms.Controllers
             return balance;
         }
 
-        // PUT: Balance/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutBalance(int id, Balance balance)
+        // GET: Balance/byUserId/5
+        [HttpGet("byUserId/{userId}")]
+        public async Task<ActionResult<Balance>> GetBalanceByUserId(int userId)
         {
-            if (id != balance.Id)
+            if (_context.Balance == null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
-            _context.Entry(balance).State = EntityState.Modified;
+            var balance = await _context.Balance.FirstOrDefaultAsync<Balance>(b => b.IdUsuario == userId);
 
-            try
+            if (balance == null)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!BalanceExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
 
-            return NoContent();
+            return balance;
         }
 
         // POST: Balance
@@ -88,26 +76,6 @@ namespace unvest_transactions_ms.Controllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetBalance", new { id = balance.Id }, balance);
-        }
-
-        // DELETE: Balance/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteBalance(int id)
-        {
-            if (_context.Balance == null)
-            {
-                return NotFound();
-            }
-            var balance = await _context.Balance.FindAsync(id);
-            if (balance == null)
-            {
-                return NotFound();
-            }
-
-            _context.Balance.Remove(balance);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
         private bool BalanceExists(int id)
