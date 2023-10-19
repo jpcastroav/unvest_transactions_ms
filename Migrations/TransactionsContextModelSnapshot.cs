@@ -105,8 +105,9 @@ namespace unvest_transactions_ms.Migrations
                         .HasColumnName("fecha")
                         .HasAnnotation("Relational:JsonPropertyName", "fecha");
 
-                    b.Property<int>("IdEmpresa")
-                        .HasColumnType("int")
+                    b.Property<string>("IdEmpresa")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("id_empresa")
                         .HasAnnotation("Relational:JsonPropertyName", "id_empresa");
 

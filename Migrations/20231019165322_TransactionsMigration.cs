@@ -52,7 +52,7 @@ namespace unvest_transactions_ms.Migrations
                     valor_accion = table.Column<decimal>(type: "decimal(19,4)", precision: 19, scale: 4, nullable: false),
                     cantidad = table.Column<decimal>(type: "decimal(19,4)", precision: 19, scale: 4, nullable: false),
                     id_usuario = table.Column<int>(type: "int", nullable: false),
-                    id_empresa = table.Column<int>(type: "int", nullable: false)
+                    id_empresa = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {

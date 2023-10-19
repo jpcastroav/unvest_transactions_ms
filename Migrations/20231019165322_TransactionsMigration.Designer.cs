@@ -12,7 +12,7 @@ using unvest_transactions_ms.Models;
 namespace unvest_transactions_ms.Migrations
 {
     [DbContext(typeof(TransactionsContext))]
-    [Migration("20230910211434_TransactionsMigration")]
+    [Migration("20231019165322_TransactionsMigration")]
     partial class TransactionsMigration
     {
         /// <inheritdoc />
@@ -108,8 +108,9 @@ namespace unvest_transactions_ms.Migrations
                         .HasColumnName("fecha")
                         .HasAnnotation("Relational:JsonPropertyName", "fecha");
 
-                    b.Property<int>("IdEmpresa")
-                        .HasColumnType("int")
+                    b.Property<string>("IdEmpresa")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("id_empresa")
                         .HasAnnotation("Relational:JsonPropertyName", "id_empresa");
 

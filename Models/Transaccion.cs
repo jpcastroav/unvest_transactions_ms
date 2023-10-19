@@ -32,5 +32,5 @@ public class Transaccion
     
     [Column("id_empresa")]
     [JsonPropertyName("id_empresa")]
-    public int IdEmpresa { get; set; }
+    public string IdEmpresa { get; set; }
 }

@@ -65,8 +65,6 @@ namespace unvest_transactions_ms.Controllers
                 stocks.Add(stock);
             }
 
-            Console.WriteLine("Empresa " + stocks[0].IdEmpresa + ", Cantidad " + stocks[0].Cantidad);
-
             return stocks;
         }
 
@@ -124,7 +122,7 @@ namespace unvest_transactions_ms.Controllers
         public class Stock
         {
             [JsonPropertyName("id_empresa")]
-            public int IdEmpresa {get; set;}
+            public string? IdEmpresa {get; set;}
 
             [JsonPropertyName("cantidad")]
             public decimal Cantidad {get; set;}
